@@ -7,12 +7,12 @@ use revm::{interpreter::Interpreter, Database, EvmContext, Inspector};
 /// An inspector that counts all opcodes.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct OpcodeCountInspector {
-    /// opcode counter
+    /// Opcode counter
     count: usize,
 }
 
 impl OpcodeCountInspector {
-    /// Returns the opcode counter
+    /// Returns the current opcode count
     #[inline]
     pub const fn count(&self) -> usize {
         self.count
