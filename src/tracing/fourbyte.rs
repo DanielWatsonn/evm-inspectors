@@ -1,13 +1,13 @@
 //! Fourbyte tracing inspector
 //!
-//! Solidity contract functions are addressed using the first four byte of the Keccak-256 hash of
-//! their signature. Therefore when calling the function of a contract, the caller must send this
+//! Solidity contract functions are addressed using the first four bytes of the Keccak-256 hash of
+//! their signature. Therefore, when calling the function of a contract, the caller must send this
 //! function selector as well as the ABI-encoded arguments as call data.
 //!
 //! The 4byteTracer collects the function selectors of every function executed in the lifetime of a
 //! transaction, along with the size of the supplied call data. The result is a map of
 //! SELECTOR-CALLDATASIZE to number of occurrences entries, where the keys are SELECTOR-CALLDATASIZE
-//! and the values are number of occurrences of this key. For example:
+//! and the values are the number of occurrences of this key. For example:
 //!
 //! ```json
 //! {
@@ -37,7 +37,7 @@ pub struct FourByteInspector {
 }
 
 impl FourByteInspector {
-    /// Returns the map of SELECTOR to number of occurrences entries
+    /// Returns a reference to the map of SELECTOR to number of occurrences entries.
     pub const fn inner(&self) -> &HashMap<(Selector, usize), u64> {
         &self.inner
     }
@@ -53,10 +53,13 @@ where
         inputs: &mut CallInputs,
     ) -> Option<CallOutcome> {
         if inputs.input.len() >= 4 {
-            let selector =
-                Selector::try_from(&inputs.input[..4]).expect("input is at least 4 bytes");
-            let calldata_size = inputs.input[4..].len();
-            *self.inner.entry((selector, calldata_size)).or_default() += 1;
+            if let Ok(selector) = Selector::try_from(&inputs.input[..4]) {
+                let calldata_size = inputs.input[4..].len();
+                let entry = (selector, calldata_size);
+                *self.inner.entry(entry).or_default() += 1;
+            } else {
+                eprintln!("Invalid selector in input: {:?}", &inputs.input[..4]);
+            }
         }
 
         None
@@ -64,9 +67,9 @@ where
 }
 
 impl From<FourByteInspector> for FourByteFrame {
-    fn from(value: FourByteInspector) -> Self {
+    fn from(inspector: FourByteInspector) -> Self {
         Self(
-            value
+            inspector
                 .inner
                 .into_iter()
                 .map(|((selector, calldata_size), count)| {
