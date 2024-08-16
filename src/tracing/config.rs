@@ -17,9 +17,9 @@ pub struct TracingInspectorConfig {
     pub record_state_diff: bool,
     /// Whether to ignore precompile calls.
     pub exclude_precompile_calls: bool,
-    /// Whether to record individual return data
+    /// Whether to record individual return data.
     pub record_call_return_data: bool,
-    /// Whether to record logs
+    /// Whether to record logs.
     pub record_logs: bool,
 }
 
@@ -37,9 +37,9 @@ impl TracingInspectorConfig {
         }
     }
 
-    /// Returns a config for parity style traces.
+    /// Returns a config for Parity style traces.
     ///
-    /// This config does _not_ record opcode level traces and is suited for `trace_transaction`
+    /// This config does _not_ record opcode level traces and is suited for `trace_transaction`.
     pub const fn default_parity() -> Self {
         Self {
             record_steps: false,
@@ -52,9 +52,9 @@ impl TracingInspectorConfig {
         }
     }
 
-    /// Returns a config for geth style traces.
+    /// Returns a config for Geth style traces.
     ///
-    /// This config does _not_ record opcode level traces and is suited for `debug_traceTransaction`
+    /// This config does _not_ record opcode level traces and is suited for `debug_traceTransaction`.
     pub const fn default_geth() -> Self {
         Self {
             record_steps: true,
@@ -67,22 +67,25 @@ impl TracingInspectorConfig {
         }
     }
 
-    /// Returns the [TracingInspectorConfig] depending on the enabled [TraceType]s
+    /// Returns the [TracingInspectorConfig] depending on the enabled [TraceType]s.
     ///
-    /// Note: the parity statediffs can be populated entirely via the execution result, so we don't
-    /// need statediff recording
+    /// Note: Parity style state diffs can be populated entirely via the execution result, so we don't
+    /// need state diff recording.
     #[inline]
     pub fn from_parity_config(trace_types: &HashSet<TraceType>) -> Self {
         let needs_vm_trace = trace_types.contains(&TraceType::VmTrace);
-        let snap_type =
-            if needs_vm_trace { StackSnapshotType::Pushes } else { StackSnapshotType::None };
+        let snap_type = if needs_vm_trace {
+            StackSnapshotType::Pushes
+        } else {
+            StackSnapshotType::None
+        };
         Self::default_parity()
             .set_steps(needs_vm_trace)
             .set_stack_snapshots(snap_type)
             .set_memory_snapshots(needs_vm_trace)
     }
 
-    /// Returns a config for geth style traces based on the given [GethDefaultTracingOptions].
+    /// Returns a config for Geth style traces based on the given [GethDefaultTracingOptions].
     #[inline]
     pub fn from_geth_config(config: &GethDefaultTracingOptions) -> Self {
         Self {
@@ -105,19 +108,19 @@ impl TracingInspectorConfig {
         self
     }
 
-    /// Configure whether individual opcode level steps should be recorded
+    /// Configure whether individual opcode level steps should be recorded.
     pub const fn set_steps(mut self, record_steps: bool) -> Self {
         self.record_steps = record_steps;
         self
     }
 
-    /// Configure whether the tracer should record memory snapshots
+    /// Configure whether the tracer should record memory snapshots.
     pub const fn set_memory_snapshots(mut self, record_memory_snapshots: bool) -> Self {
         self.record_memory_snapshots = record_memory_snapshots;
         self
     }
 
-    /// Configure how the tracer should record stack snapshots
+    /// Configure how the tracer should record stack snapshots.
     pub const fn set_stack_snapshots(mut self, record_stack_snapshots: StackSnapshotType) -> Self {
         self.record_stack_snapshots = record_stack_snapshots;
         self
@@ -128,7 +131,7 @@ impl TracingInspectorConfig {
         self.set_steps_and_state_diffs(true)
     }
 
-    /// Configure whether the tracer should record state diffs
+    /// Configure whether the tracer should record state diffs.
     pub const fn set_state_diffs(mut self, record_state_diff: bool) -> Self {
         self.record_state_diff = record_state_diff;
         self
@@ -144,32 +147,32 @@ impl TracingInspectorConfig {
         self
     }
 
-    /// Configure whether the tracer should record logs
+    /// Configure whether the tracer should record logs.
     pub const fn set_record_logs(mut self, record_logs: bool) -> Self {
         self.record_logs = record_logs;
         self
     }
 }
 
-/// How much of the stack to record. Nothing, just the items pushed, or the full stack
+/// How much of the stack to record. Nothing, just the items pushed, or the full stack.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum StackSnapshotType {
-    /// Don't record stack snapshots
+    /// Don't record stack snapshots.
     None,
-    /// Record only the items pushed to the stack
+    /// Record only the items pushed to the stack.
     Pushes,
-    /// Record the full stack
+    /// Record the full stack.
     Full,
 }
 
 impl StackSnapshotType {
-    /// Returns true if this is the [StackSnapshotType::Full] variant
+    /// Returns true if this is the [StackSnapshotType::Full] variant.
     #[inline]
     pub const fn is_full(self) -> bool {
         matches!(self, Self::Full)
     }
 
-    /// Returns true if this is the [StackSnapshotType::Pushes] variant
+    /// Returns true if this is the [StackSnapshotType::Pushes] variant.
     #[inline]
     pub const fn is_pushes(self) -> bool {
         matches!(self, Self::Pushes)
@@ -181,15 +184,15 @@ impl StackSnapshotType {
 /// This affects things like error messages.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum TraceStyle {
-    /// Parity style tracer
+    /// Parity style tracer.
     Parity,
-    /// Geth style tracer
+    /// Geth style tracer.
     #[allow(dead_code)]
     Geth,
 }
 
 impl TraceStyle {
-    /// Returns true if this is a parity style tracer.
+    /// Returns true if this is a Parity style tracer.
     pub(crate) const fn is_parity(self) -> bool {
         matches!(self, Self::Parity)
     }
@@ -204,7 +207,7 @@ mod tests {
         let mut s = HashSet::new();
         s.insert(TraceType::StateDiff);
         let config = TracingInspectorConfig::from_parity_config(&s);
-        // not required
+        // Parity config does not require recording steps or state diffs.
         assert!(!config.record_steps);
         assert!(!config.record_state_diff);
 
@@ -219,7 +222,6 @@ mod tests {
         s.insert(TraceType::StateDiff);
         let config = TracingInspectorConfig::from_parity_config(&s);
         assert!(config.record_steps);
-        // not required for StateDiff
         assert!(!config.record_state_diff);
     }
 }
